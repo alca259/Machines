@@ -46,7 +46,7 @@ public class Machines {
 	// Variables de solo lectura
 	public static final String MODID = "alca259_machines";
 	public static final String MODNAME = "Machines & Misc";
-	public static final String MODVERSION = "1.1.1";
+	public static final String MODVERSION = "1.1.2";
 
 	// Declaracion de bloques
 	public static Block destructor;
