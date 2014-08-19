@@ -4,6 +4,7 @@ Machines
 Minecraft Mod - Machines
 
 **Changelog**
+
 1.1.2
 - Now the advanced block breaker can destroy obsidian
 - Now the speed time of destroy a block, is determined by hardness of this
