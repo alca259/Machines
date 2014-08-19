@@ -3,8 +3,7 @@ Machines
 
 Minecraft Mod - Machines
 
----------------------------------------------------------------------------------------
-**Changelog Machines**
+**Changelog**
 
 1.1.1
 - Cleaned innecesary logs
