@@ -2,6 +2,7 @@ package com.alca259.machines;
 
 //Importaciones
 import net.minecraft.block.Block;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
@@ -142,7 +143,7 @@ public class Machines {
 			Character.valueOf('R'),	Items.redstone, // Redstone
 			Character.valueOf('I'), Items.iron_pickaxe // Pico de hierro
 		});
-
+		
 		GameRegistry.addRecipe(new ItemStack(advDestructor, 1), new Object[] {
 			"BBB", "XRD", "XXX",
 			Character.valueOf('B'), Blocks.stonebrick, // Stone Brick

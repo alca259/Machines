@@ -186,7 +186,6 @@ public class BlockAdvDestructor extends BlockContainer {
 		LogHelper.debug("[Alca] esDestruible:BlockAdvDestructor.java");
 		Block bloque = world.getBlock(x, y, z);
 		return bloque != Blocks.bedrock// Bedrock
-				&& bloque != Blocks.obsidian // Obsidiana
 				&& bloque.getMaterial() != Material.lava
 				&& bloque.getMaterial() != Material.water;
 	}
