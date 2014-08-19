@@ -33,6 +33,7 @@ public class BlockDestructor extends BlockContainer {
 	@SideOnly(Side.CLIENT)
 	private IIcon textureFront, textureSides, textureBottom, textureTop;
 	private Map<String, Integer[]> estadosBloque;
+	private float estadoActual;
 	private int direccion = 0;
 	private final boolean powered;
 
@@ -93,7 +94,7 @@ public class BlockDestructor extends BlockContainer {
 	 */
 	@Override
 	public int tickRate(World world) {
-		return 5;
+		return 3;
 	}
 
 	/**
@@ -229,6 +230,7 @@ public class BlockDestructor extends BlockContainer {
 		if (bloqueNext == Blocks.air) { // Aire
 			if (this.estadosBloque.get(items) != null) {
 				this.estadosBloque.remove(items);
+				this.estadoActual = 0.0F;
 			}
 		} else {
 			// Solo creara nueva destruccion si el bloque no tiene ya
@@ -240,6 +242,8 @@ public class BlockDestructor extends BlockContainer {
 						Integer.valueOf(var1), Integer.valueOf(x1),
 						Integer.valueOf(y), Integer.valueOf(z1) 
 				});
+				
+				this.estadoActual = 0.0F;
 			}
 		}
 
@@ -258,13 +262,38 @@ public class BlockDestructor extends BlockContainer {
 
 				if (var2 < 9) {
 
-					world.destroyBlockInWorldPartially(var3, x1, y, z1,	var2 + 1);
-					
-					this.estadosBloque.put(items, new Integer[] {
-							Integer.valueOf(var2 + 1),
-							Integer.valueOf(var3), Integer.valueOf(x1),
-							Integer.valueOf(y), Integer.valueOf(z1)
-					});
+					// EXPERIMENTAL: Se incrementará/decrementará la velocidad
+					// de destrucción en base a la dureza del bloque a romper
+					float dureza = bloque.getBlockHardness(world, x1, y, z1);
+
+					if (dureza > 0.0F) {
+						// Guardamos la destrucción actual del bloque mas la que ya teniamos
+						float hardnessNow = this.estadoActual + (var2 / dureza);
+						float hardnessPerTick = 1 / dureza;
+						
+						// Si la destrucción actual, es mayor o igual que la que viene del tick, avanzamos
+						if ((int) hardnessNow >= var2) {
+							world.destroyBlockInWorldPartially(var3, x1, y, z1,	var2 + 1);
+							
+							this.estadosBloque.put(items, new Integer[] {
+									Integer.valueOf(var2 + 1),
+									Integer.valueOf(var3), Integer.valueOf(x1),
+									Integer.valueOf(y), Integer.valueOf(z1)
+							});
+						}
+
+						this.estadoActual = this.estadoActual + hardnessPerTick;
+						
+					} else {
+						// Si la dureza es inferior a 0, utilizamos la velocidad de los tick
+						world.destroyBlockInWorldPartially(var3, x1, y, z1,	var2 + 1);
+						
+						this.estadosBloque.put(items, new Integer[] {
+								Integer.valueOf(var2 + 1),
+								Integer.valueOf(var3), Integer.valueOf(x1),
+								Integer.valueOf(y), Integer.valueOf(z1)
+						});	
+					}
 
 					// Actualizamos el tickrate para que vuelva a pasar por aqui
 					world.scheduleBlockUpdate(x, y, z, this, this.tickRate(world));
