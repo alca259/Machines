@@ -7,8 +7,11 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import com.alca259.machines.blocks.BlockAdvDestructor;
+import com.alca259.machines.blocks.BlockAutoFarmer;
 import com.alca259.machines.blocks.BlockDestructor;
+import com.alca259.machines.core.GUIHandler;
 import com.alca259.machines.proxy.CommonProxy;
+import com.alca259.machines.tileentity.TileEntityAutoFarmer;
 import com.alca259.machines.tileentity.TileEntityPosicion;
 import com.alca259.machines.util.LogHelper;
 import cpw.mods.fml.common.Mod;
@@ -18,6 +21,7 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 
 /**
@@ -46,13 +50,14 @@ public class Machines {
 	// Variables de solo lectura
 	public static final String MODID = "alca259_machines";
 	public static final String MODNAME = "Machines & Misc";
-	public static final String MODVERSION = "1.1.2";
+	public static final String MODVERSION = "1.2.0";
 
 	// Declaracion de bloques
 	public static Block destructor;
 	public static Block destructorActive;
 	public static Block advDestructor;
 	public static Block advDestructorActive;
+	public static Block autoFarmer;
 
 	/**
 	 * Metodos de evento
@@ -61,24 +66,20 @@ public class Machines {
 	public void preLoad(FMLPreInitializationEvent event) {
 		// Codigo a ser pre-inicializado
 		LogHelper.init(event.getModLog());
+
+		// Creamos bloques y recetas
+		loadItemsAndBlocks();
+		registrarBloques();
+		registrarRecetas();
+		
+		// Inicializar el proxy
+		proxy.registerTileEntities();
+		proxy.registerRenders();
 	}
 
 	@EventHandler
 	public void load(FMLInitializationEvent event) {
-		// Creamos bloques e items
-		loadItemsAndBlocks();
-
-		registrarBloques();
-		registrarItems();
-		registrarTileEntities();
-		registrarEntities();
-		registrarRecetas();
-		registrarFundiciones();
-		registrarGeneracionesMundo();
-		registrarEventos();
-
-		// Inicializar el proxy
-		proxy.registerRenders();
+		registrarGUI();
 	}
 
 	@EventHandler
@@ -91,51 +92,28 @@ public class Machines {
 	 * Inicializamos bloques y objetos
 	 */
 	public void loadItemsAndBlocks() {
-		LogHelper.debug("[Alca] loadItemsAndBlocks:Machines.java");
 		destructor = new BlockDestructor(false);
 		destructorActive = new BlockDestructor(true);
 		advDestructor = new BlockAdvDestructor(false);
 		advDestructorActive = new BlockAdvDestructor(true);
+		autoFarmer = new BlockAutoFarmer();
 	}
 
 	/**
 	 * Registrar bloque en el juego
 	 */
 	public void registrarBloques() {
-		LogHelper.debug("[Alca] registrarBloques:Machines.java");
 		GameRegistry.registerBlock(destructor, "alca259_destructor");
 		GameRegistry.registerBlock(destructorActive, "alca259_destructorActive");
 		GameRegistry.registerBlock(advDestructor, "alca259_advDestructor");
 		GameRegistry.registerBlock(advDestructorActive,	"alca259_advDestructorActive");
-	}
-	
-	/**
-	 * Registrar item en el juego
-	 */
-	public void registrarItems() {
-		LogHelper.debug("[Alca] registrarItems:Machines.java");
-	}
-
-	/**
-	 * Registrar entidades de bloques e items
-	 */
-	public void registrarTileEntities() {
-		LogHelper.debug("[Alca] registrarTileEntities:Machines.java");
-		GameRegistry.registerTileEntity(TileEntityPosicion.class, "Alca259-Machines-Posicion");
-	}
-
-	/**
-	 * Registrar entidades
-	 */
-	public void registrarEntities() {
-		LogHelper.debug("[Alca] registrarEntities:Machines.java");
+		GameRegistry.registerBlock(autoFarmer, "alca259_autoFarmer");
 	}
 
 	/**
 	 * Registramos la recetas para poder craftearlos
 	 */
 	public void registrarRecetas() {
-		LogHelper.debug("[Alca] registrarRecetas:Machines.java");
 		GameRegistry.addRecipe(new ItemStack(destructor, 1), new Object[] {
 			"WWW", "XRI", "XXX",
 			Character.valueOf('W'), Blocks.planks, // Planks
@@ -153,19 +131,9 @@ public class Machines {
 		});
 	}
 
-	/**
-	 * Registramos las recetas que se preparan en el horno
-	 */
-	public void registrarFundiciones() {
-		LogHelper.debug("[Alca] registrarFundiciones:Machines.java");
-	}
-	
-	public void registrarGeneracionesMundo() {
-		LogHelper.debug("[Alca] registrarGeneracionesMundo:Machines.java");
-	}
-	
-	public void registrarEventos() {
-		LogHelper.debug("[Alca] registrarEventos:Machines.java");
+	public void registrarGUI() {
+		//Register our GUI Handler.
+        NetworkRegistry.INSTANCE.registerGuiHandler(instance, new GUIHandler());
 	}
 
 }
