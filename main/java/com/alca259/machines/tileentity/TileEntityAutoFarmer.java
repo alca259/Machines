@@ -15,22 +15,17 @@ import net.minecraft.tileentity.TileEntity;
 public class TileEntityAutoFarmer extends TileEntity implements IInventory {
 
 	// Variables
-	private int facing = -1;
 	private ItemStack[] objetos = new ItemStack[9];
 	private Random aleatorio = new Random();
-	protected String inventoryName = "inventarioNumero005";
-	private static final String NBT_POSICION = "Alca259_Posicion";
+	protected String inventoryName = "inventaryOfAutoFarmer";
+	// NBT Tags
+	private static final String NBT_TAG_ITEMS = "Alca259_Machines_Items";
+	private static final String NBT_TAG_ITEMS_SLOT = "Alca259_Machines_Items_Slot";
+	private static final String NBT_TAG_INVENTORY_NAME = "Alca259_Machines_InventoryName";
+	
 	
 	// Constructor
 	public TileEntityAutoFarmer() {}
-
-	public int getFacingDirection() {
-		return this.facing;
-	}
-
-	public void setFacingDirection(int side) {
-		this.facing = side;
-	}
 
 	public void writeToNBT(NBTTagCompound nbt) {
 		super.writeToNBT(nbt);
@@ -41,40 +36,38 @@ public class TileEntityAutoFarmer extends TileEntity implements IInventory {
             if (this.objetos[i] != null)
             {
                 NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-                nbttagcompound1.setByte("Slot", (byte)i);
+                nbttagcompound1.setByte(NBT_TAG_ITEMS_SLOT, (byte)i);
                 this.objetos[i].writeToNBT(nbttagcompound1);
                 nbttaglist.appendTag(nbttagcompound1);
             }
         }
-		
-		nbt.setInteger(NBT_POSICION, (int) this.facing);
-		nbt.setTag("Items", nbttaglist);
+
+		nbt.setTag(NBT_TAG_ITEMS, nbttaglist);
 
 		if (this.hasCustomInventoryName())
         {
-            nbt.setString("CustomName", this.inventoryName);
+            nbt.setString(NBT_TAG_INVENTORY_NAME, this.inventoryName);
         }
 	}
 
 	public void readFromNBT(NBTTagCompound nbt) {
 		super.readFromNBT(nbt);
-		this.facing = nbt.getInteger(NBT_POSICION);
 		
-		NBTTagList nbttaglist = nbt.getTagList("Items", 10);
+		NBTTagList nbttaglist = nbt.getTagList(NBT_TAG_ITEMS, 10);
 		this.objetos = new ItemStack[this.getSizeInventory()];
 		
 		for (int i = 0; i < nbttaglist.tagCount(); ++i) {
 			NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
-			int j = nbttagcompound1.getByte("Slot") & 255;
+			int j = nbttagcompound1.getByte(NBT_TAG_ITEMS_SLOT) & 255;
 			
 			if (j >= 0 && j < this.objetos.length) {
 				this.objetos[j] = ItemStack.loadItemStackFromNBT(nbttagcompound1);
 			}
 		}
 		
-		if (nbt.hasKey("CustomName", 8))
+		if (nbt.hasKey(NBT_TAG_INVENTORY_NAME, 8))
         {
-            this.inventoryName = nbt.getString("CustomName");
+            this.inventoryName = nbt.getString(NBT_TAG_INVENTORY_NAME);
         }
 	}
 	

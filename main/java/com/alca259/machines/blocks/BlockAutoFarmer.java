@@ -15,7 +15,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IIcon;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -28,9 +30,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 
 public class BlockAutoFarmer extends BlockContainer {
 	/********************************************** VARIABLES DE LA CLASE **************************************************/
-	@SideOnly(Side.CLIENT)
-	private IIcon textureFront, textureSides, textureBottom, textureTop;
-	private int direccion = 0;
 	Random aleatorio = new Random();
 
 	public BlockAutoFarmer() {
@@ -43,7 +42,7 @@ public class BlockAutoFarmer extends BlockContainer {
 		this.setStepSound(Block.soundTypeStone);
 
 		this.setBlockName("alca259AutoFarmer");
-		this.setBlockBounds(0.05f, 0.5f, 0.05f, 0.95f, 1f ,0.95f);
+		this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.0625f ,0.9375f);
 		this.setCreativeTab(CreativeTabs.tabRedstone);
 	}
 
@@ -87,30 +86,7 @@ public class BlockAutoFarmer extends BlockContainer {
 	@SideOnly(Side.CLIENT)
 	public void registerBlockIcons(IIconRegister iconReg) {
 		// Registra la miniatura 3D
-		this.blockIcon = iconReg.registerIcon(Machines.MODID + ":BlockDestructor");
-		// Registra las texturas del bloque
-		this.textureFront = iconReg.registerIcon(Machines.MODID + ":BlockDestructorFrontal");
-		this.textureSides = iconReg.registerIcon("furnace_side");// iconReg.registerIcon(Machines.MODID + ":BlockDestructor");
-		this.textureBottom = iconReg.registerIcon(Machines.MODID + ":BlockDestructorBottom");
-		this.textureTop = iconReg.registerIcon(Machines.MODID + ":BlockDestructorTop");
-	}
-
-	/**
-	 * Esta funcion se encarga de asignar las texturas a cada cara del bloque
-	 */
-	@Override
-	@SideOnly(Side.CLIENT)
-	public IIcon getIcon(int side, int meta) {
-		if (meta == 0 && side == 3)
-			return textureFront;
-		else if (side == 1)
-			return textureTop;
-		else if (side == 0)
-			return textureBottom;
-		else if (side == meta)
-			return textureFront;
-		else
-			return textureSides;
+		this.blockIcon = iconReg.registerIcon("planks_oak");
 	}
 
 	/**
@@ -167,7 +143,19 @@ public class BlockAutoFarmer extends BlockContainer {
     {
         return false;
     }
-	
+
+	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4) {
+		// this.setBlockBounds(MinX, MinY, MinZ, maxX, maxY, maxZ);
+
+		int l = par1IBlockAccess.getBlockMetadata(par2, par3, par4) & 3;
+
+		if (l != 3 && l != 2) {
+			this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.0625f ,0.9375f);
+		} else {
+			this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.0625f ,0.9375f);
+		}
+	}
+    
 	/********************************************** METODOS PROPIOS **************************************************/
 	/**
 	 * Synonim: Esta funcion indica si le llega corriente de redstone
@@ -176,69 +164,89 @@ public class BlockAutoFarmer extends BlockContainer {
 		return world.isBlockIndirectlyGettingPowered(x, y, z);
 	}
 
-	/**
-	 * Esta funcion establece la direccion en base a una entidad
-	 */
-	public void setDireccion(World world, int i, int j, int k, EntityLivingBase entitylivingbase) {
-		ForgeDirection orientation = Position.get2dOrientation(new Position(
-			entitylivingbase.posX, entitylivingbase.posY,
-			entitylivingbase.posZ), new Position(i, j, k));
-		
-		TileEntityAutoFarmer blockEntity = (TileEntityAutoFarmer) world.getTileEntity(i, j, k);
+	private static int getMetadataBasedOnRotation(int rotation) {
+		if (rotation >= 315 || rotation < 45) {
+			return 1;
+		} else if (rotation >= 45 && rotation < 135) {
+			return 2;
+		} else if (rotation >= 135 && rotation < 225) {
+			return 0;
+		} else {
+			return 3;
+		}
+	}
+	
+	// set a blocks direction
+	//
+	private void setDefaultDirection(World par1World, int par2, int par3, int par4) {
+		if (!par1World.isRemote) {
+			Block l = par1World.getBlock(par2, par3, par4 - 1);
+			Block i1 = par1World.getBlock(par2, par3, par4 + 1);
+			Block j1 = par1World.getBlock(par2 - 1, par3, par4);
+			Block k1 = par1World.getBlock(par2 + 1, par3, par4);
+			byte b0 = 3;
 
-		this.direccion = orientation.getOpposite().ordinal();
+			if (l.isOpaqueCube() && !i1.isOpaqueCube()) {
+				b0 = 3;
+			}
 
-		if (blockEntity != null) {
-			blockEntity.setFacingDirection(this.direccion);
+			if (i1.isOpaqueCube() && !l.isOpaqueCube()) {
+				b0 = 2;
+			}
+
+			if (j1.isOpaqueCube() && !k1.isOpaqueCube()) {
+				b0 = 5;
+			}
+
+			if (k1.isOpaqueCube() && !j1.isOpaqueCube()) {
+				b0 = 4;
+			}
+
+			par1World.setBlockMetadataWithNotify(par2, par3, par4, b0, 2);
 		}
 	}
 
 	/********************************************** METODOS EVENTOS **************************************************/
 	/**
-	 * Esta funcion se encarga de calcular la cara del bloque en funcion de la
-	 * direccion en la que mire el jugador, y guarda la direccion del objeto
-	 *
-     * Called when the block is placed in the world.
+	 * Esta funcion se activa cuando se hace click derecho sobre el bloque
 	 */
 	@Override
-	public void onBlockPlacedBy(World world, int i, int j, int k, EntityLivingBase entitylivingbase, ItemStack item) {
-		this.setDireccion(world, i, j, k, entitylivingbase);
-		world.setBlockMetadataWithNotify(i, j, k, this.direccion, 2);
-	}
+	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int meta, float par1, float par2, float par3) {
+		if (!world.isRemote) {
+			player.openGui(Machines.instance, 1, world, x, y, z);
+		}
 
-	/**
-	 * Called when a block is placed using its ItemBlock
-	 */
-	@Override
-	public int onBlockPlaced(World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, int metadata) {
-		// Lo marcamos para comprobar en el próximo world tick
-		world.scheduleBlockUpdate(x, y, z, this, this.tickRate(world));
-		return super.onBlockPlaced(world, x, y, z, side, hitX, hitY, hitZ, metadata);
+		return true;
 	}
+	
 	/**
      * Called whenever the block is added into the world. Args: world, x, y, z
      */
-	@Override
-	public void onBlockAdded(World world, int x, int y, int z) {
-		TileEntityAutoFarmer blockEntity = (TileEntityAutoFarmer) world.getTileEntity(x, y, z);
-		if (!world.isRemote) {
-			if (!this.isPowered(world, x, y, z)) {
-				// Lo marcamos para comprobar en el próximo world tick
-				world.scheduleBlockUpdate(x, y, z, this, this.tickRate(world));
-			} else {
 
-				// Si no tiene direccion establecida, la obtenemos del NBT y la asignamos
-				if (blockEntity != null) {
-					if (blockEntity.getFacingDirection() != -1) {
-						this.direccion = blockEntity.getFacingDirection();
-					} else {
-						blockEntity.setFacingDirection(this.direccion);
-					}
-				}
+	public void onBlockAdded(World par1World, int par2, int par3, int par4) {
+		super.onBlockAdded(par1World, par2, par3, par4);
+		this.setDefaultDirection(par1World, par2, par3, par4);
+	}
 
-				// Cambiamos el bloque y lo marcamos para comprobar en el próximo world tick
-				world.setBlockMetadataWithNotify(x, y, z, this.direccion, 2);
-			}
+	public void onBlockPlacedBy(World par1World, int par2, int par3, int par4,
+		EntityLivingBase player, ItemStack item) {
+		
+		int l = MathHelper.floor_double((double) (player.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
+
+		if (l == 0) {
+			par1World.setBlockMetadataWithNotify(par2, par3, par4, 2, 2);
+		}
+
+		if (l == 1) {
+			par1World.setBlockMetadataWithNotify(par2, par3, par4, 5, 2);
+		}
+
+		if (l == 2) {
+			par1World.setBlockMetadataWithNotify(par2, par3, par4, 3, 2);
+		}
+
+		if (l == 3) {
+			par1World.setBlockMetadataWithNotify(par2, par3, par4, 4, 2);
 		}
 	}
 	
@@ -262,24 +270,10 @@ public class BlockAutoFarmer extends BlockContainer {
 		TileEntityAutoFarmer blockEntity = (TileEntityAutoFarmer) world.getTileEntity(x, y, z);
 
 		if (!world.isRemote) {
-			if (!this.isPowered(world, x, y, z)) {
-				world.setBlockMetadataWithNotify(x, y, z, this.direccion, 2);
-			} else {
+			if (this.isPowered(world, x, y, z)) {
 				// this.plantSeeds(world, x, y, z, par5Random);
 			}
 		}
-	}
-
-	/**
-	 * Esta funcion se activa cuando se hace click derecho sobre el bloque
-	 */
-	@Override
-	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int meta, float par1, float par2, float par3) {
-		if (!world.isRemote) {
-			player.openGui(Machines.instance, 1, world, x, y, z);
-		}
-
-		return true;
 	}
 	
 	@Override
