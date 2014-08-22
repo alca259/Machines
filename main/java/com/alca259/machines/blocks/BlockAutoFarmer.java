@@ -4,17 +4,21 @@ import java.util.Random;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
+import net.minecraft.block.BlockSourceImpl;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.dispenser.IBehaviorDispenseItem;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemSeedFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityDispenser;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
@@ -226,9 +230,40 @@ public class BlockAutoFarmer extends BlockContainer {
 			}
 			
 			if (canPlantSeed(world, x1, y, z1)) {
-				// TODO: Obtener el inventario
-				world.setBlock(x1, y, z1, Blocks.carrots);
-				world.setBlockMetadataWithNotify(x1, y, z1, meta, 2);
+
+				// Obtenemos un slot al azar con items
+				int slot = entity.getIndexSlotWithItems();
+
+				if (slot >= 0) {
+					// Obtenemos los items en el slot
+					ItemStack items = entity.getStackInSlot(slot);
+					
+					if (TileEntityAutoFarmer.isSeedValid(items)) {
+						// Obtenemos el item
+						Item seed = items.getItem();
+						
+						// Según el tipo de semilla, vamos a obtener el bloque que utiliza
+						Block seedBlock = ((IPlantable)seed).getPlant(world, x1, y, z1);
+						
+						// Spawneamos el bloque/item?
+						world.setBlock(x1, y, z1, seedBlock);
+						world.setBlockMetadataWithNotify(x1, y, z1, meta, 2);
+
+						// Reproducimos el sonido
+						world.playAuxSFX(1000, x, y, z, 0);
+
+						// Le restamos uno
+						items.stackSize--;
+
+						if (items.stackSize == 0) items = null;
+						
+						// Cambiamos los items en el slot
+						entity.setInventorySlotContents(slot, items);
+					}
+				} else {
+					// Reproducimos el sonido de vacio
+					world.playAuxSFX(1001, x, y, z, 0);
+				}
 			}
 		}
 

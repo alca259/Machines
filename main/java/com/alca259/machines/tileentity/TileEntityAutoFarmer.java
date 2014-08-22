@@ -3,7 +3,11 @@ package com.alca259.machines.tileentity;
 import java.util.Random;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemSeedFood;
+import net.minecraft.item.ItemSeeds;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -11,6 +15,7 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraftforge.common.IPlantable;
 
 public class TileEntityAutoFarmer extends TileEntity implements IInventory {
 
@@ -104,6 +109,25 @@ public class TileEntityAutoFarmer extends TileEntity implements IInventory {
 		return this.objetos[slot];
 	}
 
+	/**
+	 * @return Index slot with items, -1 if nothing found
+	 */
+	public int getIndexSlotWithItems()
+    {
+        int i = -1;
+        int j = 1;
+
+        for (int k = 0; k < this.objetos.length; ++k)
+        {
+            if (this.objetos[k] != null && this.aleatorio.nextInt(j++) == 0)
+            {
+                i = k;
+            }
+        }
+
+        return i;
+    }
+	
     /**
      * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
      * new stack.
@@ -223,8 +247,19 @@ public class TileEntityAutoFarmer extends TileEntity implements IInventory {
      * (ignoring stack size) into the given slot.
      */
 	@Override
-	public boolean isItemValidForSlot(int slot, ItemStack item) {
-		// TODO: Filtrar aqui semillas
-		return true;
+	public boolean isItemValidForSlot(int slot, ItemStack itemstack) {
+		// Filtramos las semillas
+		return isSeedValid(itemstack);
+	}
+	
+	/************************************ PRIVATE METHODS ********************************************/
+	public static boolean isSeedValid(ItemStack itemstack) {
+		Item seed = itemstack.getItem();
+		if (seed != null && seed instanceof IPlantable 
+				&& (seed == Items.potato || seed == Items.carrot || seed == Items.melon_seeds
+					|| seed == Items.pumpkin_seeds || seed == Items.wheat_seeds)) {
+			return true;
+		}
+		return false;
 	}
 }

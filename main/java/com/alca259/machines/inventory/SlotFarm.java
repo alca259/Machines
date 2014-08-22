@@ -1,8 +1,13 @@
 package com.alca259.machines.inventory;
 
+import com.alca259.machines.tileentity.TileEntityAutoFarmer;
+
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemSeedFood;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.IPlantable;
 
 public class SlotFarm extends Slot
 {
@@ -17,8 +22,7 @@ public class SlotFarm extends Slot
     @Override
     public boolean isItemValid(ItemStack par1ItemStack)
     {
-        //return par1ItemStack.getItem() == ModItems.testItem;
-    	// TODO: Validar items que puede contener
-    	return true;
+    	// Validar items que puede contener
+    	return TileEntityAutoFarmer.isSeedValid(par1ItemStack);
     }
 }

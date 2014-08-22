@@ -46,6 +46,10 @@ public class InventoryAutoFarm extends Container
             {
                 return null;
             }
+            else if (!TileEntityAutoFarmer.isSeedValid(itemstack1))
+            {
+            	return null;
+            }
 
             if (itemstack1.stackSize == 0)
             {
