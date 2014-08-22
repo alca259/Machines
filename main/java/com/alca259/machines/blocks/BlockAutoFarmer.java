@@ -10,6 +10,7 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -19,10 +20,12 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import com.alca259.machines.Machines;
 import com.alca259.machines.tileentity.TileEntityAutoFarmer;
+import com.alca259.machines.tileentity.TileEntityPosicion;
 import com.alca259.machines.util.Position;
 
 import cpw.mods.fml.relauncher.Side;
@@ -42,7 +45,8 @@ public class BlockAutoFarmer extends BlockContainer {
 		this.setStepSound(Block.soundTypeStone);
 
 		this.setBlockName("alca259AutoFarmer");
-		this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.0625f ,0.9375f);
+		// this.setBlockBounds(MinX, MinY, MinZ, maxX, maxY, maxZ);
+		this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.5f ,0.9375f);
 		this.setCreativeTab(CreativeTabs.tabRedstone);
 	}
 
@@ -145,14 +149,12 @@ public class BlockAutoFarmer extends BlockContainer {
     }
 
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4) {
-		// this.setBlockBounds(MinX, MinY, MinZ, maxX, maxY, maxZ);
-
 		int l = par1IBlockAccess.getBlockMetadata(par2, par3, par4) & 3;
 
 		if (l != 3 && l != 2) {
-			this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.0625f ,0.9375f);
+			this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.5f ,0.9375f);
 		} else {
-			this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.0625f ,0.9375f);
+			this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.5f ,0.9375f);
 		}
 	}
     
@@ -162,18 +164,6 @@ public class BlockAutoFarmer extends BlockContainer {
 	 */
 	public boolean isPowered(World world, int x, int y, int z) {
 		return world.isBlockIndirectlyGettingPowered(x, y, z);
-	}
-
-	private static int getMetadataBasedOnRotation(int rotation) {
-		if (rotation >= 315 || rotation < 45) {
-			return 1;
-		} else if (rotation >= 45 && rotation < 135) {
-			return 2;
-		} else if (rotation >= 135 && rotation < 225) {
-			return 0;
-		} else {
-			return 3;
-		}
 	}
 	
 	// set a blocks direction
@@ -205,7 +195,72 @@ public class BlockAutoFarmer extends BlockContainer {
 			par1World.setBlockMetadataWithNotify(par2, par3, par4, b0, 2);
 		}
 	}
+	
+	private void plantSeeds(World world, int x, int y, int z, TileEntityAutoFarmer entity) {
+		int meta = entity.getBlockMetadata();
+		if (meta == 0) meta = 3;
+		
+		// Inicializamos
+		int x1 = x;
+		int z1 = z;
 
+		for (int i = 0; i < 12; i++) {
+			// Obtenemos la direccion en la que mira el bloque segun el metadato guardado
+			switch (meta) {
+				// Norte (z -)
+				case 2:
+					z1 -= 1;
+					break;
+				// Sur (z +)
+				case 3:
+					z1 += 1;
+					break;
+				// Oeste (x -)
+				case 4:
+					x1 -= 1;
+					break;
+				// Este (x +)
+				case 5:
+					x1 += 1;
+					break;
+			}
+			
+			if (canPlantSeed(world, x1, y, z1)) {
+				// TODO: Obtener el inventario
+				world.setBlock(x1, y, z1, Blocks.carrots);
+				world.setBlockMetadataWithNotify(x1, y, z1, meta, 2);
+			}
+		}
+
+	}
+
+	/**
+	 * Devuelve si puede plantar en una posicion, si no esta ocupado, y
+	 * si el suelo inferior es plantable
+	 * @param world
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @return
+	 */
+	private boolean canPlantSeed(World world, int x, int y, int z) {
+		// Obtenemos el bloque superior
+		Block bloque = world.getBlock(x, y, z);
+		
+		// Si el bloque esta ocupado, devolvemos falso
+		if (bloque != Blocks.air) return false;
+		
+		// Obtenemos el bloque inferior a donde queremos plantar
+		Block bloqueInferior = world.getBlock(x, y - 1, z);
+
+        if (bloqueInferior == Blocks.farmland)
+        {
+            return true;
+        }
+
+        return false;
+	}
+	
 	/********************************************** METODOS EVENTOS **************************************************/
 	/**
 	 * Esta funcion se activa cuando se hace click derecho sobre el bloque
@@ -256,9 +311,17 @@ public class BlockAutoFarmer extends BlockContainer {
      */
 	@Override
 	public void onNeighborBlockChange(World world, int x, int y, int z, Block block) {
+		TileEntityAutoFarmer blockEntity = (TileEntityAutoFarmer)world.getTileEntity(x, y, z);
+		
 		if (!world.isRemote) {
-			// Lo marcamos para comprobar en el próximo world tick
-			world.scheduleBlockUpdate(x, y, z, this, this.tickRate(world));
+			if (this.isPowered(world, x, y, z)) {
+				// Lo marcamos para comprobar en el próximo world tick
+				world.scheduleBlockUpdate(x, y, z, this, this.tickRate(world));
+			} else {
+				int meta = blockEntity.getBlockMetadata();
+				if (meta == 0) meta = 3;
+				world.setBlockMetadataWithNotify(x, y, z, meta, 2);
+			}
 		}
 	}
 
@@ -271,7 +334,11 @@ public class BlockAutoFarmer extends BlockContainer {
 
 		if (!world.isRemote) {
 			if (this.isPowered(world, x, y, z)) {
-				// this.plantSeeds(world, x, y, z, par5Random);
+				this.plantSeeds(world, x, y, z, blockEntity);
+			} else {
+				int meta = blockEntity.getBlockMetadata();
+				if (meta == 0) meta = 3;
+				world.setBlockMetadataWithNotify(x, y, z, meta, 2);
 			}
 		}
 	}
