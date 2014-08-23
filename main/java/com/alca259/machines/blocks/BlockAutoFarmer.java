@@ -9,6 +9,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.dispenser.IBehaviorDispenseItem;
+import net.minecraft.dispenser.IBlockSource;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -19,6 +20,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityDispenser;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
@@ -84,7 +86,7 @@ public class BlockAutoFarmer extends BlockContainer {
 	 */
 	@Override
 	public int tickRate(World world) {
-		return 4;
+		return 10;
 	}
 
 	/**
@@ -207,6 +209,7 @@ public class BlockAutoFarmer extends BlockContainer {
 		// Inicializamos
 		int x1 = x;
 		int z1 = z;
+		int face = 0;
 
 		for (int i = 0; i < 12; i++) {
 			// Obtenemos la direccion en la que mira el bloque segun el metadato guardado
@@ -251,6 +254,9 @@ public class BlockAutoFarmer extends BlockContainer {
 
 						// Reproducimos el sonido
 						world.playAuxSFX(1000, x, y, z, 0);
+						
+						// FIXME: Mostrar particulas (Esto no funciona, aunque está correcto)
+						showParticles(world, x1, y, z1);
 
 						// Le restamos uno
 						items.stackSize--;
@@ -259,6 +265,12 @@ public class BlockAutoFarmer extends BlockContainer {
 						
 						// Cambiamos los items en el slot
 						entity.setInventorySlotContents(slot, items);
+						
+						// Marcamos la maquina para actualizar
+						world.scheduleBlockUpdate(x, y, z, this, this.tickRate(world));
+						
+						// Rompemos el bucle
+						break;
 					}
 				} else {
 					// Reproducimos el sonido de vacio
@@ -296,6 +308,17 @@ public class BlockAutoFarmer extends BlockContainer {
         return false;
 	}
 	
+	@SideOnly(Side.CLIENT)
+	public void showParticles(World world, int x, int y, int z){
+		float f1 = (float)x + 0.5F;
+		float f2 = (float)y + 1.5F;
+		float f3 = (float)z + 0.5F;
+		float f4 = aleatorio.nextFloat() * 0.6F - 0.3F;
+		float f5 = aleatorio.nextFloat() * -0.6F - -0.3F;
+
+        world.spawnParticle("happyVillager", (double)f1+f4, (double)f2, (double)f3+f5, 0.0D, 0.0D, 0.0D);
+	}
+
 	/********************************************** METODOS EVENTOS **************************************************/
 	/**
 	 * Esta funcion se activa cuando se hace click derecho sobre el bloque
