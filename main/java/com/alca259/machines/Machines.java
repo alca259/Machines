@@ -129,6 +129,15 @@ public class Machines {
 			Character.valueOf('R'),	Items.redstone, // Redstone
 			Character.valueOf('D'), Items.diamond_pickaxe // Pico de diamante
 		});
+		
+		GameRegistry.addRecipe(new ItemStack(autoFarmer, 4), new Object[] {
+			"WWW", "RIB", "OOO",
+			Character.valueOf('W'), Blocks.planks,
+			Character.valueOf('R'), Items.redstone,
+			Character.valueOf('I'), Blocks.iron_block,
+			Character.valueOf('B'), Items.bow,
+			Character.valueOf('O'), Items.iron_ingot
+		});
 	}
 
 	public void registrarGUI() {

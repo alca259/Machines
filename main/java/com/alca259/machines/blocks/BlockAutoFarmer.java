@@ -52,7 +52,7 @@ public class BlockAutoFarmer extends BlockContainer {
 
 		this.setBlockName("alca259AutoFarmer");
 		// this.setBlockBounds(MinX, MinY, MinZ, maxX, maxY, maxZ);
-		this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.5f ,0.9375f);
+		this.setBlockBounds(0.1875f, 0.0f, 0.0f, 0.8125f, 0.75f, 0.9375f);
 		this.setCreativeTab(CreativeTabs.tabRedstone);
 	}
 
@@ -157,10 +157,21 @@ public class BlockAutoFarmer extends BlockContainer {
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4) {
 		int l = par1IBlockAccess.getBlockMetadata(par2, par3, par4) & 3;
 
-		if (l != 3 && l != 2) {
-			this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.5f ,0.9375f);
-		} else {
-			this.setBlockBounds(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.5f ,0.9375f);
+		switch(l) {
+			case 0: // West
+				this.setBlockBounds(0.0625f, 0.0f, 0.1875f, 1.0f, 0.75f, 0.8125f);
+				break;
+			case 1: // East
+				this.setBlockBounds(0.0f, 0.0f, 0.1875f, 0.9375f, 0.75f, 0.8125f);
+				break;
+			case 2: // North
+				this.setBlockBounds(0.1875f, 0.0f, 0.0625f, 0.8125f, 0.75f, 1.0f);
+				break;
+			case 3: // South
+				this.setBlockBounds(0.1875f, 0.0f, 0.0f, 0.8125f, 0.75f, 0.9375f);
+				break;
+			default:
+				this.setBlockBounds(0.1875f, 0.0f, 0.0f, 0.8125f, 0.75f, 0.9375f);
 		}
 	}
     
